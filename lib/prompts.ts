@@ -1,89 +1,129 @@
-import { ElementType, Polarity, AIReport } from '@/types';
-import { elementArchetypeNames } from './elements';
+import { BaziResult } from '@/types';
+import { elementData } from './elements';
+
+// ==================== 报告生成 Prompt ====================
 
 export interface ReportPromptParams {
-  element: ElementType;
-  polarity: Polarity;
+  baziResult: BaziResult;
   birthDate: string;
+  birthTime: string;
 }
 
-export function generateReportPrompt(params: ReportPromptParams): string {
-  const archetype = elementArchetypeNames[params.element];
-  const polarityLabel = params.polarity === 'yin' ? 'Yin' : 'Yang';
+/**
+ * 生成结构化命理数据JSON（用于传给LLM）
+ */
+function generateBaziContext(bazi: BaziResult, birthDate: string, birthTime: string): string {
+  const { fourPillars, dayMaster, tenGods, elementBalance, strength, favorableElements, unfavorableElements, favorableGods, personalityArchetype } = bazi;
   
-  return `You are an expert in Bazi (Four Pillars of Destiny) translated into modern Western self-help and wellness language.
+  return JSON.stringify({
+    userProfile: {
+      birthDate,
+      birthTime,
+    },
+    fourPillars: {
+      year: {
+        gan: `${fourPillars.year.gan.gan} (${fourPillars.year.gan.element}, ${fourPillars.year.gan.polarity})`,
+        zhi: `${fourPillars.year.zhi.zhi} (${fourPillars.year.zhi.element})`,
+        tenGod: tenGods.yearGan,
+      },
+      month: {
+        gan: `${fourPillars.month.gan.gan} (${fourPillars.month.gan.element}, ${fourPillars.month.gan.polarity})`,
+        zhi: `${fourPillars.month.zhi.zhi} (${fourPillars.month.zhi.element})`,
+        tenGod: tenGods.monthGan,
+      },
+      day: {
+        gan: `${fourPillars.day.gan.gan} — DAY MASTER (${fourPillars.day.gan.element}, ${fourPillars.day.gan.polarity})`,
+        zhi: `${fourPillars.day.zhi.zhi} (${fourPillars.day.zhi.element})`,
+      },
+      hour: {
+        gan: `${fourPillars.hour.gan.gan} (${fourPillars.hour.gan.element}, ${fourPillars.hour.gan.polarity})`,
+        zhi: `${fourPillars.hour.zhi.zhi} (${fourPillars.hour.zhi.element})`,
+        tenGod: tenGods.hourGan,
+      },
+    },
+    dayMaster: {
+      element: dayMaster.element,
+      polarity: dayMaster.polarity,
+      archetype: personalityArchetype,
+    },
+    elementBalance: {
+      wood: Math.round(elementBalance.wood * 10) / 10,
+      fire: Math.round(elementBalance.fire * 10) / 10,
+      earth: Math.round(elementBalance.earth * 10) / 10,
+      metal: Math.round(elementBalance.metal * 10) / 10,
+      water: Math.round(elementBalance.water * 10) / 10,
+    },
+    strength,
+    favorableElements,
+    unfavorableElements,
+    favorableGods,
+  }, null, 2);
+}
 
-The user is a ${polarityLabel} ${params.element} person (Elemental Archetype: ${archetype}).
+/**
+ * 生成完整报告的主Prompt
+ */
+export function generateFullReportPrompt(params: ReportPromptParams): string {
+  const { baziResult } = params;
+  const context = generateBaziContext(baziResult, params.birthDate, params.birthTime);
+  const element = baziResult.element;
+  const polarity = baziResult.polarity;
+  const data = elementData[element];
+  const polarityLabel = polarity === 'yin' ? 'Yin' : 'Yang';
+  const { tenGods } = baziResult;
+  
+  return `You are an expert in Bazi (Four Pillars of Destiny) who translates ancient Chinese metaphysics into modern Western self-help, psychology, and wellness language.
 
-Generate a personalized Energy Blueprint Report with EXACTLY 4 sections, each 2-3 sentences:
+## User's Complete Birth Chart
 
-1. **Career & Purpose**
-   - Describe their natural strengths and ideal work environment
-   - Suggest career directions that align with their ${params.element} element energy
-   - Mention how their ${polarityLabel} nature influences their professional approach
+${context}
 
-2. **Relationships & Love**
-   - Describe their relationship style and emotional patterns
-   - Mention which elements they naturally harmonize with or challenge
-   - Give one specific insight about their love language
+## User's Elemental Identity
+The user is a ${polarityLabel} ${element.toUpperCase()} person — ${params.baziResult.personalityArchetype}.
+Core traits: ${data.keywords.join(', ')}.
 
-3. **Health & Wellness**
-   - Focus on holistic wellness aligned to their element (not medical advice)
-   - Suggest lifestyle practices, environments, or rhythms that restore their energy
-   - Include a mindfulness or spiritual practice recommendation
+---
 
-4. **2026 Energy Forecast**
-   - Give a general energy forecast for the upcoming year
-   - Highlight opportunities for growth and areas to be mindful of
-   - End with an empowering, forward-looking statement
+## YOUR TASK
 
-**Critical Tone Guidelines:**
+Generate a deeply personalized "Energy Blueprint Report" with EXACTLY 7 sections. Each section should be 180-250 words (not sentences — words). Write in a warm, mystical yet grounded tone. Use modern psychology and self-help terminology. NEVER use Chinese terms like "Bazi" or "Qi" — translate concepts into Western-friendly language.
+
+### Tone Guidelines:
 - Mystical but grounded, inspiring, and empowering
-- Use modern self-help language; avoid Chinese terminology
+- Use suggestive language ("you may find", "consider exploring", "your energy tends toward")
 - NEVER give medical, financial, or legal advice
 - NEVER make absolute predictions ("you will", "you must")
-- Use suggestive language ("you may find", "consider exploring", "your energy tends toward")
-- End the ENTIRE response with: "This insight is for entertainment and self-reflection purposes only."
+- Include specific, actionable insights based on the user's actual birth chart data above
+- Reference their specific Day Master, Ten Gods, element balance, and favorable elements
 
-**Output Format - Return ONLY a JSON object, no markdown code blocks:**
-{"career":"...","love":"...","health":"...","forecast":"..."}`;
-}
+### 1. Overview — Your Energy Signature
+Describe the user's overall energy pattern based on their Four Pillars. Reference their Day Master element and polarity. Explain what their dominant and missing elements mean for their life path. Mention how their strength level (${params.baziResult.strength}) shapes their approach to challenges.
 
-export function getFallbackReport(element: ElementType, polarity: Polarity): AIReport {
-  const p = polarity === 'yin' ? 'Yin' : 'Yang';
-  
-  const fallbacks: Record<ElementType, AIReport> = {
-    wood: {
-      career: `As ${p} Wood — The Growth Pioneer, you thrive in environments that value innovation and vision. Your natural ability to see future possibilities makes you excellent in strategic roles, creative industries, or entrepreneurial ventures. Consider careers where you can plant seeds and watch ideas grow over time.`,
-      love: `In relationships, you bring nurturing energy and genuine care for your partner's growth. You harmonize beautifully with Fire and Water elements, while Metal may challenge you to find balance. Your love language involves acts of service and creating shared visions for the future.`,
-      health: `Your Wood energy flourishes with outdoor activities, especially in forests or green spaces. Morning routines that include stretching or gentle movement help your energy flow smoothly. Consider practices like Tai Chi or forest bathing to maintain your vitality and inner balance.`,
-      forecast: `2026 brings opportunities for significant personal and professional expansion. Your pioneering spirit will find fertile ground for new projects and relationships. Trust your vision and take calculated risks — the universe is aligning to support your growth this year. This insight is for entertainment and self-reflection purposes only.`,
-    },
-    fire: {
-      career: `As ${p} Fire — The Radiant Inspirer, you shine brightest in roles that allow self-expression and connection with others. Your natural charisma draws people to your ideas, making you effective in leadership, teaching, performance, or marketing. You need work that fuels your passion rather than draining it.`,
-      love: `Your warmth and enthusiasm make you a magnetic partner who brings excitement to relationships. You connect most deeply with Wood and Earth elements, while Water may temper your flame in healthy ways. Your love language is quality time and words of affirmation that celebrate mutual growth.`,
-      health: `Your Fire energy needs regular outlets for expression to avoid burnout. Dancing, cardio exercises, or any rhythmic movement helps channel your abundant energy. Evening wind-down rituals are essential — try candlelight meditation or journaling to cool your inner flame before sleep.`,
-      forecast: `2026 invites you to illuminate new paths and inspire others through your authentic presence. Transformation is your theme this year — old structures may dissolve to make way for brighter possibilities. Embrace change as fuel for your evolution. This insight is for entertainment and self-reflection purposes only.`,
-    },
-    earth: {
-      career: `As ${p} Earth — The Grounded Guardian, you excel in roles that require reliability, patience, and nurturing others. Your methodical approach ensures nothing falls through the cracks, making you invaluable in healthcare, education, project management, or counseling. Others naturally trust your steady presence.`,
-      love: `You offer relationships a deep sense of security and unwavering support. You naturally harmonize with Metal and Fire, while Wood may stretch you to grow beyond your comfort zone. Your love language manifests through physical touch and creating comfortable, welcoming spaces for loved ones.`,
-      health: `Your Earth energy is restored through connection with nature, especially mountains and gardens. Regular grounding practices like walking barefoot on grass or working with clay help center your energy. Consistent meal times and nourishing foods are particularly important for maintaining your stability.`,
-      forecast: `2026 asks you to build lasting foundations while remaining open to necessary changes. Your natural patience will be rewarded as long-term plans begin to materialize. Trust the process — your steady presence creates ripples of positive influence. This insight is for entertainment and self-reflection purposes only.`,
-    },
-    metal: {
-      career: `As ${p} Metal — The Strategic Architect, you bring precision and clarity to complex problems. Your analytical mind thrives in finance, law, engineering, research, or any field requiring systematic thinking. You have a gift for creating elegant structures from chaos, refining processes until they shine.`,
-      love: `You approach relationships with loyalty and high standards, valuing honesty above all. You complement Water and Earth beautifully, while Fire may challenge you to embrace spontaneity. Your love language involves acts of service and creating thoughtful systems that show you care.`,
-      health: `Your Metal energy benefits from practices that promote deep breathing and mental clarity. Activities like swimming, hiking at high altitudes, or practicing breathwork help purify and strengthen your inner resolve. Autumn is your power season — use it to release what no longer serves you.`,
-      forecast: `2026 presents opportunities to cut through confusion and establish clear boundaries. Your discernment will serve you well as you make important decisions about your path forward. Trust your inner compass — it has been refined through years of experience. This insight is for entertainment and self-reflection purposes only.`,
-    },
-    water: {
-      career: `As ${p} Water — The Intuitive Explorer, you navigate professional landscapes with remarkable adaptability and insight. Your intuitive intelligence serves you well in creative fields, psychology, research, or roles requiring diplomacy. You see connections others miss, flowing around obstacles rather than confronting them directly.`,
-      love: `You bring emotional depth and intuitive understanding to relationships, often sensing your partner's needs before they articulate them. You flow naturally with Metal and Wood, while Earth provides grounding for your fluid nature. Your love language is quality time and deep, meaningful conversations.`,
-      health: `Your Water energy is restored through proximity to oceans, rivers, or lakes. Fluid movement practices like swimming, yoga, or dance help maintain your natural flow. Regular journaling or dream work can help you process the deep emotional currents that run through your being.`,
-      forecast: `2026 invites you to explore new depths and trust your intuition as never before. Like a river finding its path to the ocean, circumstances will guide you toward meaningful destinations. Embrace the unknown — your adaptability is your greatest strength. This insight is for entertainment and self-reflection purposes only.`,
-    },
-  };
-  
-  return fallbacks[element];
+### 2. Personality Decoding
+Deep dive into their character based on Day Master + Ten Gods configuration. How does their ${tenGods.monthGan} (monthly influence) shape their inner drives? What does their ${tenGods.yearGan} (background influence) say about their upbringing and inherited traits? How do their favorable elements (${params.baziResult.favorableElements.join(', ')}) manifest in their personality?
+
+### 3. Career & Purpose
+Analyze career potential based on their Ten Gods. ${params.baziResult.favorableGods.includes('正官') || params.baziResult.favorableGods.includes('七杀') ? 'Their Authority/Challenge gods suggest leadership potential.' : ''} ${params.baziResult.favorableGods.includes('偏财') || params.baziResult.favorableGods.includes('正财') ? 'Their Wealth gods indicate business acumen.' : ''} Suggest 2-3 specific career directions that align with their elemental nature. Explain how their ${params.baziResult.strength === 'strong' ? 'strong self-assurance' : params.baziResult.strength === 'weak' ? 'collaborative nature' : 'adaptable energy'} influences their professional approach.
+
+### 4. Relationships & Love
+Describe their relationship style based on their Day Master and element balance. Which elements (${params.baziResult.favorableElements.join(', ')}) naturally harmonize with them? How does their ${polarityLabel} nature show up in love? Mention their "love language" based on their dominant Ten Gods. If they have strong Output gods (食神/伤官), they need intellectual connection. If strong Wealth gods, they express love through acts of service.
+
+### 5. Health & Wellness
+Focus on holistic wellness aligned to their element balance (NOT medical advice). Their ${params.baziResult.elementBalance.wood < 1 ? 'low Wood energy' : ''}${params.baziResult.elementBalance.fire < 1 ? 'low Fire energy' : ''}${params.baziResult.elementBalance.earth < 1 ? 'low Earth energy' : ''}${params.baziResult.elementBalance.metal < 1 ? 'low Metal energy' : ''}${params.baziResult.elementBalance.water < 1 ? 'low Water energy' : ''} suggests specific lifestyle needs. Suggest environments, foods (general categories), movement practices, and mindfulness techniques that restore their energy. Recommend how to activate their favorable elements daily.
+
+### 6. 2026 Energy Forecast
+Give a personalized energy forecast for 2026 based on their element and favorable elements. 2026 is a 丙午 (Bing Wu) year — strong Fire energy. Explain how this Fire year specifically interacts with their ${element} Day Master. Highlight opportunities for growth and areas to be mindful of. End with an empowering, forward-looking statement.
+
+### 7. Activation Guide — Your Daily Practice
+Give 3-5 concrete, daily actionable recommendations to activate their favorable elements (${params.baziResult.favorableElements.join(', ')}). These should be simple practices they can integrate into their routine. Include: a morning ritual, a color/wardrobe suggestion, a space/environment tip, and a relationship practice.
+
+---
+
+## OUTPUT FORMAT
+
+Return ONLY a JSON object with these exact keys, no markdown code blocks:
+
+{"overview":"...","personality":"...","career":"...","love":"...","health":"...","forecast":"...","advice":"..."}
+
+Every value MUST end with: \" This insight is for entertainment and self-reflection purposes only.\"`;
 }

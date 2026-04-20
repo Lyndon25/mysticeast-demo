@@ -2,48 +2,49 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Briefcase, Heart, Leaf, Calendar, Sparkles, Wand2 } from 'lucide-react';
+import {
+  Briefcase, Heart, Leaf, Calendar, Sparkles, Wand2,
+  User, Brain, Lightbulb
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { ElementResult, AIReport, LLMConfig } from '@/types';
-import { elementData } from '@/lib/elements';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { BaziResult, AIReport } from '@/types';
 import { useLLM } from '@/hooks/useLLM';
 import ParticleBackground from '@/components/ParticleBackground';
-import ElementCard from '@/components/ElementCard';
 import MysticButton from '@/components/MysticButton';
 import DisclaimerBanner from '@/components/DisclaimerBanner';
 
 const sections = [
-  { id: 'career', label: 'Career & Purpose', icon: Briefcase },
-  { id: 'love', label: 'Relationships & Love', icon: Heart },
-  { id: 'health', label: 'Health & Wellness', icon: Leaf },
-  { id: 'forecast', label: '2026 Forecast', icon: Calendar },
+  { id: 'overview' as const, label: 'Overview', icon: User },
+  { id: 'personality' as const, label: 'Personality', icon: Brain },
+  { id: 'career' as const, label: 'Career & Purpose', icon: Briefcase },
+  { id: 'love' as const, label: 'Relationships & Love', icon: Heart },
+  { id: 'health' as const, label: 'Health & Wellness', icon: Leaf },
+  { id: 'forecast' as const, label: '2026 Forecast', icon: Calendar },
+  { id: 'advice' as const, label: 'Daily Practice', icon: Lightbulb },
 ];
 
 export default function ReportPage() {
   const router = useRouter();
-  const [result, setResult] = useState<ElementResult | null>(null);
-  const [activeTab, setActiveTab] = useState('career');
+  const [baziResult, setBaziResult] = useState<BaziResult | null>(null);
+  const [activeTab, setActiveTab] = useState('overview');
   const [report, setReport] = useState<AIReport | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const [llmConfig] = useLocalStorage<LLMConfig>('mysticeast-llm-config', {
-    apiKey: '',
-    baseUrl: 'https://api.openai.com/v1',
-    model: 'gpt-4o-mini',
-  });
-
-  const { generateReport } = useLLM({ config: llmConfig });
+  const { generateReport } = useLLM();
 
   useEffect(() => {
-    const storedResult = localStorage.getItem('mysticeast-element-result');
-    if (!storedResult) {
+    // 优先读取新的八字结果
+    const storedBazi = localStorage.getItem('mysticeast-bazi-result');
+    const storedElement = localStorage.getItem('mysticeast-element-result');
+    
+    if (!storedBazi && !storedElement) {
       router.push('/quiz');
       return;
     }
 
-    const parsed = JSON.parse(storedResult);
-    setResult(parsed);
+    if (storedBazi) {
+      setBaziResult(JSON.parse(storedBazi));
+    }
 
     // Check if report already exists
     const storedReport = localStorage.getItem('mysticeast-report');
@@ -53,14 +54,16 @@ export default function ReportPage() {
   }, [router]);
 
   const handleGenerateReport = async () => {
-    if (!result) return;
+    if (!baziResult) return;
 
     setIsGenerating(true);
     try {
+      const birthInfo = JSON.parse(localStorage.getItem('mysticeast-birth-info') || '{}');
+      
       const generatedReport = await generateReport({
-        element: result.element,
-        polarity: result.polarity,
-        birthDate: localStorage.getItem('mysticeast-birth-info') || '{}',
+        baziResult,
+        birthDate: birthInfo.date || '',
+        birthTime: birthInfo.time || '',
       });
 
       setReport(generatedReport);
@@ -72,15 +75,21 @@ export default function ReportPage() {
     }
   };
 
-  if (!result) {
+  if (!baziResult) {
     return (
       <main className="min-h-screen flex items-center justify-center">
-        <div className="text-cyan-400 animate-pulse">Loading...</div>
+        <div className="text-cyan-400 animate-pulse">Loading your blueprint...</div>
       </main>
     );
   }
 
-  const data = elementData[result.element];
+  const data = {
+    color: baziResult.color,
+    name: baziResult.element.charAt(0).toUpperCase() + baziResult.element.slice(1),
+  };
+
+  // 免费版限制：未生成报告时显示预览
+  const isLocked = !report;
 
   return (
     <main className="relative min-h-screen py-20 px-6">
@@ -108,23 +117,16 @@ export default function ReportPage() {
             Your Energy Blueprint
           </div>
           <h1 className="text-3xl md:text-4xl font-serif text-white">
-            Personalized Insights
+            {baziResult.personalityArchetype}
           </h1>
-        </motion.div>
-
-        {/* Element Identity Card (compact) */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-10"
-        >
-          <ElementCard result={result} showFullDescription={false} />
+          <p className="text-slate-400 mt-2">
+            {baziResult.polarity === 'yin' ? 'Yin' : 'Yang'} {data.name} · Day Master: {baziResult.dayMaster.gan}
+          </p>
         </motion.div>
 
         {/* Report Content */}
         <AnimatePresence mode="wait">
-          {!report ? (
+          {isLocked ? (
             <motion.div
               key="generate"
               initial={{ opacity: 0 }}
@@ -144,24 +146,44 @@ export default function ReportPage() {
               <h3 className="text-xl font-serif text-white mb-3">
                 Unlock Your Full Report
               </h3>
-              <p className="text-slate-400 max-w-md mx-auto mb-8">
-                Generate a personalized AI report covering your career, relationships, 
-                health, and 2026 forecast based on your elemental archetype.
+              <p className="text-slate-400 max-w-md mx-auto mb-6">
+                Generate a personalized 7-section AI report based on your complete Four Pillars birth chart.
               </p>
 
-              {/* API Key Status */}
+              {/* 免费预览内容 */}
+              <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-6 max-w-lg mx-auto mb-8 text-left">
+                <h4 className="text-sm font-medium text-cyan-400 mb-3">Free Preview</h4>
+                <div className="space-y-2 text-sm text-slate-400">
+                  <div className="flex justify-between">
+                    <span>Element</span>
+                    <span className="text-white capitalize">{baziResult.element}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Polarity</span>
+                    <span className="text-white capitalize">{baziResult.polarity}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Strength</span>
+                    <span className="text-white capitalize">{baziResult.strength}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Favorable</span>
+                    <span className="text-cyan-400">{baziResult.favorableElements.join(', ')}</span>
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-slate-800">
+                  <p className="text-slate-300 text-sm leading-relaxed">
+                    {baziResult.description}
+                  </p>
+                </div>
+              </div>
+
+              {/* API Status */}
               <div className="mb-6">
-                {llmConfig.apiKey ? (
-                  <p className="text-green-400 text-sm flex items-center justify-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-green-500" />
-                    AI reports enabled with your API key
-                  </p>
-                ) : (
-                  <p className="text-amber-400 text-sm flex items-center justify-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-amber-500" />
-                    Using demo mode (pre-written reports)
-                  </p>
-                )}
+                <p className="text-cyan-400 text-sm flex items-center justify-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-cyan-500" />
+                  AI-Powered Full Report
+                </p>
               </div>
 
               <MysticButton
@@ -181,10 +203,14 @@ export default function ReportPage() {
                 ) : (
                   <>
                     <Sparkles className="w-5 h-5 mr-2" />
-                    Generate My Report
+                    Generate Full Report
                   </>
                 )}
               </MysticButton>
+
+              <p className="text-slate-600 text-xs mt-4">
+                No API key? We'll generate a personalized report using your birth chart data.
+              </p>
             </motion.div>
           ) : (
             <motion.div
@@ -223,7 +249,7 @@ export default function ReportPage() {
                 >
                   <div className="flex items-center gap-3 mb-6">
                     {(() => {
-                      const Icon = sections.find(s => s.id === activeTab)?.icon || Briefcase;
+                      const Icon = sections.find(s => s.id === activeTab)?.icon || User;
                       return (
                         <div
                           className="w-10 h-10 rounded-full flex items-center justify-center"
@@ -241,9 +267,11 @@ export default function ReportPage() {
                     </h3>
                   </div>
 
-                  <p className="text-slate-300 leading-relaxed text-base">
-                    {report[activeTab as keyof AIReport]}
-                  </p>
+                  <div className="prose prose-invert prose-slate max-w-none">
+                    <p className="text-slate-300 leading-relaxed text-base whitespace-pre-line">
+                      {report?.[activeTab as keyof AIReport]}
+                    </p>
+                  </div>
                 </motion.div>
               </AnimatePresence>
 

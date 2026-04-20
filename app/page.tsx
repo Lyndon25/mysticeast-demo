@@ -123,6 +123,9 @@ export default function LandingPage() {
             <MysticButton href="/quiz" size="lg">
               Discover Your Element — Free
             </MysticButton>
+            <MysticButton href="/divination" size="lg" className="border-amber-500/30 hover:border-amber-400">
+              Ask the Oracle
+            </MysticButton>
           </motion.div>
 
           {/* Disclaimer */}
