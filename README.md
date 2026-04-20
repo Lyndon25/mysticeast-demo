@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MysticEast AI — 东方秘境
 
-## Getting Started
+基于东方五行八字智慧的 AI 算命演示应用。新中式极简美学风格，支持本地 LLM API 配置。
 
-First, run the development server:
+## 快速启动
 
+### 方式一：开发模式（推荐开发者使用）
+
+双击运行 **`start.bat`**，脚本会自动：
+1. 检查 Node.js 环境
+2. 安装依赖（首次运行）
+3. 启动开发服务器
+4. 自动打开浏览器访问 http://localhost:3000
+
+### 方式二：演示模式（适合直接给他人演示）
+
+需要先构建静态文件：
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+然后双击 **`start-demo.bat`**，脚本会启动静态文件服务器并自动打开浏览器。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 功能说明
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **五行测试**：输入出生日期，计算您的五行元素人格
+- **AI 报告**：生成个性化报告（事业/感情/健康/流年）
+- **API 配置**：右上角设置按钮可配置 OpenAI / 兼容 API Key
+- **演示模式**：不配置 API Key 时，使用预写的专业报告模板
 
-## Learn More
+## 打包分发
 
-To learn more about Next.js, take a look at the following resources:
+构建完成后，`dist/` 目录（约 1MB）可直接压缩发给他人，对方运行 `start-demo.bat` 即可。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 技术栈
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js 14 + TypeScript + Tailwind CSS + Framer Motion
