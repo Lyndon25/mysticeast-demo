@@ -17,7 +17,6 @@ export async function POST(req: NextRequest) {
       mainHexagram,
       changedHexagram,
       changingLines,
-      lineTexts,
     } = body;
 
     const apiKey = process.env.OPENAI_API_KEY;

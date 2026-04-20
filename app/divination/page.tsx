@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, RotateCcw, ChevronDown, Heart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { generateDivination, LineType, Hexagram } from '@/lib/yijing';
+import { castLine, generateDivination, LineType, Hexagram } from '@/lib/yijing';
 import ParticleBackground from '@/components/ParticleBackground';
 import MysticButton from '@/components/MysticButton';
 import DisclaimerBanner from '@/components/DisclaimerBanner';
@@ -31,25 +31,23 @@ export default function DivinationPage() {
   const [interpretation, setInterpretation] = useState('');
   const [isInterpreting, setIsInterpreting] = useState(false);
 
-  // 自动投掷动画
-  useEffect(() => {
-    if (step === 'casting' && currentCast < 6) {
-      const timer = setTimeout(() => {
-        const { castLine } = require('@/lib/yijing');
-        const line = castLine();
-        setCastLines(prev => [...prev, line]);
-        setCurrentCast(prev => prev + 1);
-      }, 1200);
-      return () => clearTimeout(timer);
-    } else if (step === 'casting' && currentCast === 6 && castLines.length === 6) {
-      const { generateDivination } = require('@/lib/yijing');
-      const res = generateDivination();
-      setResult(res);
-      setStep('result');
-      // 自动触发AI解卦
-      handleInterpret(res);
-    }
-  }, [step, currentCast, castLines.length]);
+  const getFallbackInterpret = useCallback((res: NonNullable<typeof result>) => {
+    return `**The Current Situation**
+
+You have drawn ${res.mainHexagram.nameEn} — a powerful symbol of ${res.mainHexagram.judgment.toLowerCase().split('.')[0]}. This suggests you are in a phase where ${res.mainHexagram.image.toLowerCase().split('.')[0]}.
+
+**The Guidance**
+
+${res.changingLines.length > 0 ? `The changing line${res.changingLines.length > 1 ? 's' : ''} speak${res.changingLines.length > 1 ? '' : 's'} to a specific moment of transformation. ${res.lineTexts[0]}` : 'With no changing lines, this reading speaks to a stable situation — the message is clear and unwavering.'}
+
+**Actionable Steps**
+
+1. Take a quiet moment to reflect on what ${res.mainHexagram.nameEn} means for your current path.
+2. Consider how the wisdom of "${res.mainHexagram.judgment}" applies to your question.
+3. Trust that the answer will unfold in its own time — the I Ching rarely gives instant clarity, but always gives truth.
+
+This insight is for entertainment and self-reflection purposes only.`;
+  }, []);
 
   const handleInterpret = useCallback(async (res: typeof result) => {
     if (!res) return;
@@ -78,25 +76,25 @@ export default function DivinationPage() {
     } finally {
       setIsInterpreting(false);
     }
-  }, [question]);
+  }, [question, getFallbackInterpret]);
 
-  const getFallbackInterpret = (res: NonNullable<typeof result>) => {
-    return `**The Current Situation**
-
-You have drawn ${res.mainHexagram.nameEn} — a powerful symbol of ${res.mainHexagram.judgment.toLowerCase().split('.')[0]}. This suggests you are in a phase where ${res.mainHexagram.image.toLowerCase().split('.')[0]}.
-
-**The Guidance**
-
-${res.changingLines.length > 0 ? `The changing line${res.changingLines.length > 1 ? 's' : ''} speak${res.changingLines.length > 1 ? '' : 's'} to a specific moment of transformation. ${res.lineTexts[0]}` : 'With no changing lines, this reading speaks to a stable situation — the message is clear and unwavering.'}
-
-**Actionable Steps**
-
-1. Take a quiet moment to reflect on what ${res.mainHexagram.nameEn} means for your current path.
-2. Consider how the wisdom of "${res.mainHexagram.judgment}" applies to your question.
-3. Trust that the answer will unfold in its own time — the I Ching rarely gives instant clarity, but always gives truth.
-
-This insight is for entertainment and self-reflection purposes only.`;
-  };
+  // 自动投掷动画
+  useEffect(() => {
+    if (step === 'casting' && currentCast < 6) {
+      const timer = setTimeout(() => {
+        const line = castLine();
+        setCastLines(prev => [...prev, line]);
+        setCurrentCast(prev => prev + 1);
+      }, 1200);
+      return () => clearTimeout(timer);
+    } else if (step === 'casting' && currentCast === 6 && castLines.length === 6) {
+      const res = generateDivination();
+      setResult(res);
+      setStep('result');
+      // 自动触发AI解卦
+      handleInterpret(res);
+    }
+  }, [step, currentCast, castLines.length, handleInterpret]);
 
   const handleStart = () => setStep('question');
   const handleCast = () => {

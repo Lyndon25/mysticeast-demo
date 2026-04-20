@@ -209,7 +209,7 @@ export default function ReportPage() {
               </MysticButton>
 
               <p className="text-slate-600 text-xs mt-4">
-                No API key? We'll generate a personalized report using your birth chart data.
+                No API key? We&apos;ll generate a personalized report using your birth chart data.
               </p>
             </motion.div>
           ) : (
