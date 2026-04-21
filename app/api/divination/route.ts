@@ -23,11 +23,18 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.OPENAI_API_KEY;
     const rawBaseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
-    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+    const model = process.env.OPENAI_MODEL || '';
 
     if (!apiKey) {
       return NextResponse.json(
         { error: 'API key not configured on server' },
+        { status: 500 }
+      );
+    }
+
+    if (!model) {
+      return NextResponse.json(
+        { error: 'OPENAI_MODEL not configured. Please set it to your provider-specific model ID, e.g. Qwen/Qwen2.5-72B-Instruct for SiliconFlow.' },
         { status: 500 }
       );
     }
