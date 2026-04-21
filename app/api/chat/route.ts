@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
           {
             role: 'system',
             content:
-              'You are a wise Eastern philosophy interpreter who translates ancient Bazi wisdom into modern Western self-help language. You respond with valid JSON only, no markdown.',
+              'You are a wise Eastern philosophy interpreter who translates ancient Bazi wisdom into modern Western self-help language. You respond with valid JSON only. Within each JSON string value, you may use Markdown formatting (bold, lists, etc.) for better readability.',
           },
           { role: 'user', content: prompt },
         ],

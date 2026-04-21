@@ -11,6 +11,7 @@ import MysticButton from '@/components/MysticButton';
 import DisclaimerBanner from '@/components/DisclaimerBanner';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useLanguage } from '@/components/LanguageProvider';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 
 const lineSymbols: Record<LineType, string> = {
   'young-yang': '━━━',
@@ -265,11 +266,7 @@ ${locale === 'zh' ? '此洞察仅供娱乐和自我反思之用。' : 'This insi
                     {locale === 'zh' ? '神谕正在沉思……' : 'The oracle is contemplating...'}
                   </div>
                 ) : (
-                  <div className="prose prose-invert prose-slate max-w-none">
-                    <div className="text-slate-300 leading-relaxed whitespace-pre-line">
-                      {interpretation}
-                    </div>
-                  </div>
+                  <MarkdownRenderer content={interpretation} />
                 )}
               </div>
 

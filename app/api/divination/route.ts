@@ -45,12 +45,12 @@ export async function POST(req: NextRequest) {
 ${changingLines.length > 0 ? `- 变爻：第 ${changingLines.join('、')} 爻` : '- 无变爻'}
 ${changedHexagram.number !== mainHexagram.number ? `- 变卦：${changedHexagram.number} - ${changedHexagram.nameEn}` : ''}
 
-请提供温暖而有洞察力的解读，分为三个部分：
-1. 当前局势 - 主卦揭示了他们现在所处的状态
-2. 指引 - 变爻（如有）或核心信息的智慧
-3. 行动建议 - 2-3 个具体可做的事情
+请提供温暖而有洞察力的解读，分为三个部分，使用 Markdown 格式输出：
+1. **当前局势** - 主卦揭示了他们现在所处的状态
+2. **指引** - 变爻（如有）或核心信息的智慧
+3. **行动建议** - 2-3 个具体可做的事情
 
-用神秘但接地气的语气写作。使用现代自我帮助的语言。结尾加上："此洞察仅供娱乐和自我反思之用。"`
+用神秘但接地气的语气写作。使用现代自我帮助的语言。在内容中合理使用加粗、列表等 Markdown 语法。结尾加上："此洞察仅供娱乐和自我反思之用。"`
       : `You are a wise spiritual guide who interprets the I Ching (Book of Changes) through modern psychology and self-reflection.
 
 The user asked: "${question || 'What guidance do I need right now?'}"
@@ -62,12 +62,12 @@ Their casting result:
 ${changingLines.length > 0 ? `- Changing Lines: ${changingLines.join(', ')}` : '- No changing lines'}
 ${changedHexagram.number !== mainHexagram.number ? `- Changed Hexagram: ${changedHexagram.number} - ${changedHexagram.nameEn}` : ''}
 
-Please provide a warm, insightful interpretation in 3 sections:
-1. The Current Situation - what the main hexagram reveals about where they are now
-2. The Guidance - specific wisdom from the changing lines (if any) or the core message
-3. Actionable Steps - 2-3 concrete things they can do
+Please provide a warm, insightful interpretation in 3 sections, using Markdown formatting:
+1. **The Current Situation** - what the main hexagram reveals about where they are now
+2. **The Guidance** - specific wisdom from the changing lines (if any) or the core message
+3. **Actionable Steps** - 2-3 concrete things they can do
 
-Write in a mystical yet grounded tone. Use modern self-help language. Never use Chinese terms. End with: "This insight is for entertainment and self-reflection purposes only."`;
+Write in a mystical yet grounded tone. Use modern self-help language. Never use Chinese terms. Use bold, lists, and other Markdown syntax for better readability. End with: "This insight is for entertainment and self-reflection purposes only."`;
 
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',

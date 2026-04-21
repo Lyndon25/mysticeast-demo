@@ -71,3 +71,20 @@ input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: #22d3ee;
 }
+
+/* Prose / Markdown overrides for dark theme */
+.prose p {
+  margin-bottom: 0.75rem;
+}
+.prose p:last-child {
+  margin-bottom: 0;
+}
+.prose ul > li::marker {
+  color: #22d3ee;
+}
+.prose ol > li::marker {
+  color: #22d3ee;
+}
+.prose blockquote p:last-child {
+  margin-bottom: 0;
+}

@@ -15,6 +15,7 @@ import MysticButton from '@/components/MysticButton';
 import DisclaimerBanner from '@/components/DisclaimerBanner';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useLanguage } from '@/components/LanguageProvider';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 
 export default function ReportPage() {
   const router = useRouter();
@@ -274,11 +275,9 @@ export default function ReportPage() {
                     </h3>
                   </div>
 
-                  <div className="prose prose-invert prose-slate max-w-none">
-                    <p className="text-slate-300 leading-relaxed text-base whitespace-pre-line">
-                      {report?.[activeTab as keyof AIReport]}
-                    </p>
-                  </div>
+                  <MarkdownRenderer
+                    content={String(report?.[activeTab as keyof AIReport] || '')}
+                  />
                 </motion.div>
               </AnimatePresence>
 
