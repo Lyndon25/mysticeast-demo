@@ -3,19 +3,23 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-
-const loadingMessages = [
-  'Calculating your Four Pillars...',
-  'Mapping your Elemental Archetype...',
-  'Consulting ancient manuscripts...',
-  'Aligning cosmic energies...',
-  'Decoding your destiny blueprint...',
-];
+import { useLanguage } from '@/components/LanguageProvider';
+import { t } from '@/lib/i18n';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function LoadingPage() {
   const router = useRouter();
+  const { locale } = useLanguage();
   const [currentMessage, setCurrentMessage] = useState(0);
   const [progress, setProgress] = useState(0);
+
+  const loadingMessages = [
+    t('loading.messages.0', locale),
+    t('loading.messages.1', locale),
+    t('loading.messages.2', locale),
+    t('loading.messages.3', locale),
+    t('loading.messages.4', locale),
+  ];
 
   useEffect(() => {
     // Cycle through messages
@@ -44,7 +48,7 @@ export default function LoadingPage() {
       clearInterval(progressInterval);
       clearTimeout(timeout);
     };
-  }, [router]);
+  }, [router, loadingMessages.length]);
 
   return (
     <main className="relative min-h-screen flex flex-col items-center justify-center px-6">
@@ -52,6 +56,8 @@ export default function LoadingPage() {
       <div className="absolute inset-0 bg-slate-950">
         <div className="absolute w-[400px] h-[400px] bg-cyan-900/10 blur-[120px] rounded-full top-1/3 left-1/2 -translate-x-1/2" />
       </div>
+
+      <LanguageSwitcher className="fixed top-4 right-4 z-50" />
 
       <motion.div
         initial={{ opacity: 0 }}
@@ -98,7 +104,7 @@ export default function LoadingPage() {
         </div>
 
         <p className="text-slate-500 text-sm mt-4">
-          This may take a moment...
+          {t('loading.subtext', locale)}
         </p>
       </motion.div>
     </main>

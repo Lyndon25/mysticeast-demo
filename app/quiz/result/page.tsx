@@ -6,13 +6,17 @@ import { ArrowRight, Sparkles, Scroll } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ElementResult, BaziResult, ElementType } from '@/types';
 import { calculateBazi, formatBazi, getStrengthDescription } from '@/lib/bazi';
+import { t, TranslationKey } from '@/lib/i18n';
 import ParticleBackground from '@/components/ParticleBackground';
 import ElementCard from '@/components/ElementCard';
 import MysticButton from '@/components/MysticButton';
 import DisclaimerBanner from '@/components/DisclaimerBanner';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useLanguage } from '@/components/LanguageProvider';
 
 export default function ResultPage() {
   const router = useRouter();
+  const { locale } = useLanguage();
   const [baziResult, setBaziResult] = useState<BaziResult | null>(null);
   const [elementResult, setElementResult] = useState<ElementResult | null>(null);
 
@@ -48,7 +52,7 @@ export default function ResultPage() {
   if (!baziResult || !elementResult) {
     return (
       <main className="min-h-screen flex items-center justify-center">
-        <div className="text-cyan-400 animate-pulse">Calculating your ancient blueprint...</div>
+        <div className="text-cyan-400 animate-pulse">{t('result.loading', locale)}</div>
       </main>
     );
   }
@@ -64,9 +68,26 @@ export default function ResultPage() {
     water: '#3b82f6',
   };
 
+  // 四柱位置翻译
+  const pillarLabels: Record<string, string> = {
+    year: t('result.pillar.year', locale),
+    month: t('result.pillar.month', locale),
+    day: t('result.pillar.day', locale),
+    hour: t('result.pillar.hour', locale),
+  };
+
+  // 身强身弱翻译
+  const strengthLabel = strength === 'strong'
+    ? t('result.strength.strong', locale)
+    : strength === 'weak'
+    ? t('result.strength.weak', locale)
+    : t('result.strength.neutral', locale);
+
   return (
     <main className="relative min-h-screen py-20 px-6">
       <ParticleBackground />
+
+      <LanguageSwitcher className="fixed top-4 right-4 z-50" />
 
       <div className="relative z-10 max-w-4xl mx-auto">
         {/* Header */}
@@ -77,7 +98,7 @@ export default function ResultPage() {
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-500/30 bg-cyan-500/5 text-cyan-400 text-sm mb-6">
             <Sparkles className="w-4 h-4" />
-            Your Energy Blueprint — Revealed
+            {t('result.badge', locale)}
           </div>
         </motion.div>
 
@@ -93,7 +114,7 @@ export default function ResultPage() {
         >
           <div className="flex items-center gap-3 mb-6">
             <Scroll className="w-5 h-5 text-cyan-400" />
-            <h3 className="text-lg font-serif text-white">Your Four Pillars</h3>
+            <h3 className="text-lg font-serif text-white">{t('result.fourPillars.title', locale)}</h3>
             <span className="text-slate-500 text-sm ml-auto font-mono">{formatBazi(baziResult)}</span>
           </div>
 
@@ -115,7 +136,7 @@ export default function ResultPage() {
                       : 'border-slate-700/50 bg-slate-800/30'
                   }`}
                 >
-                  <div className="text-slate-500 text-xs uppercase tracking-wider mb-2">{pos}</div>
+                  <div className="text-slate-500 text-xs uppercase tracking-wider mb-2">{pillarLabels[pos]}</div>
                   <div 
                     className="text-2xl md:text-3xl font-bold mb-1"
                     style={{ color: elementColorMap[pillar.gan.element] }}
@@ -123,7 +144,7 @@ export default function ResultPage() {
                     {pillar.gan.gan}
                   </div>
                   <div className="text-xs text-slate-400 mb-2">
-                    {pillar.gan.element} · {pillar.gan.polarity}
+                    {t(`element.${pillar.gan.element}` as TranslationKey, locale)} · {t(`polarity.${pillar.gan.polarity}` as TranslationKey, locale)}
                   </div>
                   <div 
                     className="text-xl md:text-2xl font-bold mb-1"
@@ -132,7 +153,7 @@ export default function ResultPage() {
                     {pillar.zhi.zhi}
                   </div>
                   <div className="text-xs text-slate-400">
-                    {pillar.zhi.element}
+                    {t(`element.${pillar.zhi.element}` as TranslationKey, locale)}
                   </div>
                   {tenGod && (
                     <div className="mt-2 text-[10px] md:text-xs px-2 py-1 rounded-full bg-slate-700/50 text-slate-300 inline-block">
@@ -141,7 +162,7 @@ export default function ResultPage() {
                   )}
                   {isDayMaster && (
                     <div className="mt-2 text-[10px] px-2 py-1 rounded-full bg-cyan-500/20 text-cyan-400 inline-block">
-                      Day Master
+                      {t('result.dayMaster', locale)}
                     </div>
                   )}
                 </motion.div>
@@ -157,7 +178,7 @@ export default function ResultPage() {
           transition={{ delay: 0.6 }}
           className="mt-6 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 md:p-8"
         >
-          <h3 className="text-lg font-serif text-white mb-4">Elemental Balance</h3>
+          <h3 className="text-lg font-serif text-white mb-4">{t('result.elementalBalance.title', locale)}</h3>
           <div className="space-y-3">
             {(['wood', 'fire', 'earth', 'metal', 'water'] as ElementType[]).map((el) => {
               const value = elementBalance[el];
@@ -167,7 +188,7 @@ export default function ResultPage() {
               
               return (
                 <div key={el} className="flex items-center gap-3">
-                  <span className="w-16 text-sm text-slate-400 capitalize">{el}</span>
+                  <span className="w-16 text-sm text-slate-400 capitalize">{t(`element.${el}` as TranslationKey, locale)}</span>
                   <div className="flex-1 h-2.5 bg-slate-800 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
@@ -188,9 +209,9 @@ export default function ResultPage() {
           <div className="mt-4 flex items-center gap-4 text-xs text-slate-500">
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-cyan-400/50" />
-              ★ Favorable Element
+              ★ {t('result.elementalBalance.favorable', locale)}
             </span>
-            <span>Strength: <span className="text-cyan-400 capitalize">{strength}</span></span>
+            <span>{t('result.elementalBalance.strength', locale)}: <span className="text-cyan-400 capitalize">{strengthLabel}</span></span>
           </div>
         </motion.div>
 
@@ -202,7 +223,7 @@ export default function ResultPage() {
           className="mt-6 max-w-xl mx-auto text-center"
         >
           <p className="text-slate-300 text-base leading-relaxed">
-            {getStrengthDescription(strength)}
+            {getStrengthDescription(strength, locale)}
           </p>
         </motion.div>
 
@@ -215,16 +236,16 @@ export default function ResultPage() {
         >
           <div className="mb-4">
             <p className="text-slate-400 text-sm mb-2">
-              Your Day Master is <span className="text-cyan-400">{dayMaster.gan}{dayMaster.element === 'wood' ? '木' : dayMaster.element === 'fire' ? '火' : dayMaster.element === 'earth' ? '土' : dayMaster.element === 'metal' ? '金' : '水'}</span> — {personalityArchetype}
+              {t('result.yourArchetype', locale)}: <span className="text-cyan-400">{dayMaster.gan}{dayMaster.element === 'wood' ? '木' : dayMaster.element === 'fire' ? '火' : dayMaster.element === 'earth' ? '土' : dayMaster.element === 'metal' ? '金' : '水'}</span> — {personalityArchetype}
             </p>
             <p className="text-slate-500 text-xs">
-              Favorable Elements: {favorableElements.map(e => (
-                <span key={e} className="text-cyan-400 capitalize">{e} </span>
+              {t('result.elementalBalance.favorable', locale)}: {favorableElements.map(e => (
+                <span key={e} className="text-cyan-400">{t(`element.${e}` as TranslationKey, locale)} </span>
               ))}
             </p>
           </div>
           <MysticButton onClick={() => router.push('/report')} size="lg">
-            Unlock Full Energy Blueprint
+            {t('result.viewFullReport', locale)}
             <ArrowRight className="w-5 h-5 ml-2" />
           </MysticButton>
         </motion.div>

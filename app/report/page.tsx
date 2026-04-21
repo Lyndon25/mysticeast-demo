@@ -9,28 +9,33 @@ import {
 import { useRouter } from 'next/navigation';
 import { BaziResult, AIReport } from '@/types';
 import { useLLM } from '@/hooks/useLLM';
+import { t, TranslationKey } from '@/lib/i18n';
 import ParticleBackground from '@/components/ParticleBackground';
 import MysticButton from '@/components/MysticButton';
 import DisclaimerBanner from '@/components/DisclaimerBanner';
-
-const sections = [
-  { id: 'overview' as const, label: 'Overview', icon: User },
-  { id: 'personality' as const, label: 'Personality', icon: Brain },
-  { id: 'career' as const, label: 'Career & Purpose', icon: Briefcase },
-  { id: 'love' as const, label: 'Relationships & Love', icon: Heart },
-  { id: 'health' as const, label: 'Health & Wellness', icon: Leaf },
-  { id: 'forecast' as const, label: '2026 Forecast', icon: Calendar },
-  { id: 'advice' as const, label: 'Daily Practice', icon: Lightbulb },
-];
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useLanguage } from '@/components/LanguageProvider';
 
 export default function ReportPage() {
   const router = useRouter();
+  const { locale } = useLanguage();
   const [baziResult, setBaziResult] = useState<BaziResult | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [report, setReport] = useState<AIReport | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const { generateReport } = useLLM();
+
+  // 根据语言动态生成 sections
+  const sections = [
+    { id: 'overview' as const, label: t('report.tabs.overview', locale), icon: User },
+    { id: 'personality' as const, label: t('report.tabs.personality', locale), icon: Brain },
+    { id: 'career' as const, label: t('report.tabs.career', locale), icon: Briefcase },
+    { id: 'love' as const, label: t('report.tabs.love', locale), icon: Heart },
+    { id: 'health' as const, label: t('report.tabs.health', locale), icon: Leaf },
+    { id: 'forecast' as const, label: t('report.tabs.forecast', locale), icon: Calendar },
+    { id: 'advice' as const, label: t('report.tabs.advice', locale), icon: Lightbulb },
+  ];
 
   useEffect(() => {
     // 优先读取新的八字结果
@@ -78,7 +83,7 @@ export default function ReportPage() {
   if (!baziResult) {
     return (
       <main className="min-h-screen flex items-center justify-center">
-        <div className="text-cyan-400 animate-pulse">Loading your blueprint...</div>
+        <div className="text-cyan-400 animate-pulse">{t('report.loading', locale)}</div>
       </main>
     );
   }
@@ -102,8 +107,10 @@ export default function ReportPage() {
         onClick={() => router.push('/quiz/result')}
         className="fixed top-4 left-4 z-50 px-4 py-2 text-slate-400 hover:text-white transition-colors text-sm"
       >
-        ← Back to Result
+        {t('nav.backToResult', locale)}
       </motion.button>
+
+      <LanguageSwitcher className="fixed top-4 right-4 z-50" />
 
       <div className="relative z-10 max-w-4xl mx-auto">
         {/* Header */}
@@ -114,13 +121,13 @@ export default function ReportPage() {
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-500/30 bg-cyan-500/5 text-cyan-400 text-sm mb-6">
             <Sparkles className="w-4 h-4" />
-            Your Energy Blueprint
+            {t('report.badge', locale)}
           </div>
           <h1 className="text-3xl md:text-4xl font-serif text-white">
             {baziResult.personalityArchetype}
           </h1>
           <p className="text-slate-400 mt-2">
-            {baziResult.polarity === 'yin' ? 'Yin' : 'Yang'} {data.name} · Day Master: {baziResult.dayMaster.gan}
+            {t(`polarity.${baziResult.polarity}` as TranslationKey, locale)} {t(`element.${baziResult.element}` as TranslationKey, locale)} · {t('report.dayMasterLabel', locale)}: {baziResult.dayMaster.gan}
           </p>
         </motion.div>
 
@@ -144,31 +151,31 @@ export default function ReportPage() {
                 <Wand2 className="w-8 h-8" style={{ color: data.color }} />
               </div>
               <h3 className="text-xl font-serif text-white mb-3">
-                Unlock Your Full Report
+                {t('report.locked.title', locale)}
               </h3>
               <p className="text-slate-400 max-w-md mx-auto mb-6">
-                Generate a personalized 7-section AI report based on your complete Four Pillars birth chart.
+                {t('report.locked.subtitle', locale)}
               </p>
 
               {/* 免费预览内容 */}
               <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-6 max-w-lg mx-auto mb-8 text-left">
-                <h4 className="text-sm font-medium text-cyan-400 mb-3">Free Preview</h4>
+                <h4 className="text-sm font-medium text-cyan-400 mb-3">{t('report.locked.preview', locale)}</h4>
                 <div className="space-y-2 text-sm text-slate-400">
                   <div className="flex justify-between">
-                    <span>Element</span>
-                    <span className="text-white capitalize">{baziResult.element}</span>
+                    <span>{t('report.locked.element', locale)}</span>
+                    <span className="text-white">{t(`element.${baziResult.element}` as TranslationKey, locale)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Polarity</span>
-                    <span className="text-white capitalize">{baziResult.polarity}</span>
+                    <span>{t('report.locked.polarity', locale)}</span>
+                    <span className="text-white">{t(`polarity.${baziResult.polarity}` as TranslationKey, locale)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Strength</span>
-                    <span className="text-white capitalize">{baziResult.strength}</span>
+                    <span>{t('report.locked.strength', locale)}</span>
+                    <span className="text-white">{t(`result.strength.${baziResult.strength}` as TranslationKey, locale)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Favorable</span>
-                    <span className="text-cyan-400">{baziResult.favorableElements.join(', ')}</span>
+                    <span>{t('report.locked.favorable', locale)}</span>
+                    <span className="text-cyan-400">{baziResult.favorableElements.map(e => t(`element.${e}` as TranslationKey, locale)).join(', ')}</span>
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t border-slate-800">
@@ -182,7 +189,7 @@ export default function ReportPage() {
               <div className="mb-6">
                 <p className="text-cyan-400 text-sm flex items-center justify-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-cyan-500" />
-                  AI-Powered Full Report
+                  {t('report.locked.aiStatus', locale)}
                 </p>
               </div>
 
@@ -198,18 +205,18 @@ export default function ReportPage() {
                       transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
                       className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full mr-2"
                     />
-                    Generating Your Report...
+                    {t('report.locked.generating', locale)}
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-5 h-5 mr-2" />
-                    Generate Full Report
+                    {t('report.locked.generate', locale)}
                   </>
                 )}
               </MysticButton>
 
               <p className="text-slate-600 text-xs mt-4">
-                No API key? We&apos;ll generate a personalized report using your birth chart data.
+                No API key? We will generate a personalized report using your birth chart data.
               </p>
             </motion.div>
           ) : (
@@ -283,7 +290,7 @@ export default function ReportPage() {
                   className="text-slate-500 hover:text-cyan-400 transition-colors text-sm flex items-center gap-2 mx-auto"
                 >
                   <Sparkles className="w-4 h-4" />
-                  {isGenerating ? 'Regenerating...' : 'Regenerate Report'}
+                  {isGenerating ? t('report.locked.generating', locale) : t('report.locked.generate', locale)}
                 </button>
               </div>
             </motion.div>

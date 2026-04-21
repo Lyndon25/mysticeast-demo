@@ -171,7 +171,20 @@ export function getElementEnglish(element: ElementType): string {
   return m[element];
 }
 
-export function getStrengthDescription(strength: 'strong' | 'weak' | 'neutral'): string {
-  const d = { strong:'Your Day Master energy is strong and vibrant. You naturally assert yourself and can handle pressure well. Your challenge is to channel this energy constructively rather than overwhelming others.', weak:'Your Day Master energy is gentle and receptive. You thrive with support and collaboration. Your strength lies in adaptability and listening to your intuition. Building self-confidence is your growth edge.', neutral:'Your Day Master energy is well-balanced. You can adapt to both leadership and supportive roles. This versatility is a gift, though you may sometimes feel pulled in different directions.' };
-  return d[strength];
+export function getStrengthDescription(strength: 'strong' | 'weak' | 'neutral', locale: 'en' | 'zh' = 'en'): string {
+  const d = {
+    strong: {
+      en: 'Your Day Master energy is strong and vibrant. You naturally assert yourself and can handle pressure well. Your challenge is to channel this energy constructively rather than overwhelming others.',
+      zh: '你的日主能量强旺有力。你天生自信，能够承受压力。你的挑战在于建设性地引导这股能量，而不是让它压倒他人。',
+    },
+    weak: {
+      en: 'Your Day Master energy is gentle and receptive. You thrive with support and collaboration. Your strength lies in adaptability and listening to your intuition. Building self-confidence is your growth edge.',
+      zh: '你的日主能量柔和内敛。你在支持和协作中茁壮成长。你的力量在于适应力和倾听直觉。建立自信是你成长的课题。',
+    },
+    neutral: {
+      en: 'Your Day Master energy is well-balanced. You can adapt to both leadership and supportive roles. This versatility is a gift, though you may sometimes feel pulled in different directions.',
+      zh: '你的日主能量平衡适中。你能够适应领导和辅助两种角色。这种多才多艺是天赋，尽管你有时会感到被不同方向拉扯。',
+    },
+  };
+  return d[strength][locale];
 }

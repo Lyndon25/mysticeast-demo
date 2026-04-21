@@ -96,12 +96,6 @@ export interface AIReport {
   advice: string;
 }
 
-export interface LLMConfig {
-  apiKey: string;
-  baseUrl: string;
-  model: string;
-}
-
 export interface DivinationRecord {
   id: string;
   timestamp: number;

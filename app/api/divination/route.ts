@@ -7,6 +7,7 @@ interface DivinationBody {
   changedHexagram: Hexagram;
   changingLines: number[];
   lineTexts: string[];
+  locale?: 'en' | 'zh';
 }
 
 export async function POST(req: NextRequest) {
@@ -17,6 +18,7 @@ export async function POST(req: NextRequest) {
       mainHexagram,
       changedHexagram,
       changingLines,
+      locale = 'en',
     } = body;
 
     const apiKey = process.env.OPENAI_API_KEY;
@@ -30,7 +32,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const prompt = `You are a wise spiritual guide who interprets the I Ching (Book of Changes) through modern psychology and self-reflection.
+    const isZh = locale === 'zh';
+    const prompt = isZh
+      ? `你是一位智慧的精神导师，通过现代心理学和自我反思来解读《易经》。
+
+用户提问："${question || '我现在需要什么指引？'}"
+
+他们的占卜结果：
+- 主卦：${mainHexagram.number} - ${mainHexagram.name} (${mainHexagram.nameEn})
+- 卦辞：${mainHexagram.judgment}
+- 象辞：${mainHexagram.image}
+${changingLines.length > 0 ? `- 变爻：第 ${changingLines.join('、')} 爻` : '- 无变爻'}
+${changedHexagram.number !== mainHexagram.number ? `- 变卦：${changedHexagram.number} - ${changedHexagram.nameEn}` : ''}
+
+请提供温暖而有洞察力的解读，分为三个部分：
+1. 当前局势 - 主卦揭示了他们现在所处的状态
+2. 指引 - 变爻（如有）或核心信息的智慧
+3. 行动建议 - 2-3 个具体可做的事情
+
+用神秘但接地气的语气写作。使用现代自我帮助的语言。结尾加上："此洞察仅供娱乐和自我反思之用。"`
+      : `You are a wise spiritual guide who interprets the I Ching (Book of Changes) through modern psychology and self-reflection.
 
 The user asked: "${question || 'What guidance do I need right now?'}"
 

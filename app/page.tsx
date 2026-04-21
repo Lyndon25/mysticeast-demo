@@ -1,12 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Sparkles, Compass, BookOpen, ChevronDown, Settings } from 'lucide-react';
-import { useState } from 'react';
+import { Sparkles, Compass, BookOpen, ChevronDown } from 'lucide-react';
 import ParticleBackground from '@/components/ParticleBackground';
 import MysticButton from '@/components/MysticButton';
 import DisclaimerBanner from '@/components/DisclaimerBanner';
-import ApiKeyModal from '@/components/ApiKeyModal';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useLanguage } from '@/components/LanguageProvider';
+import { t } from '@/lib/i18n';
 
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
@@ -21,24 +22,6 @@ const staggerContainer = {
     },
   },
 };
-
-const steps = [
-  {
-    icon: Compass,
-    title: 'Enter Your Birth Details',
-    description: 'Share your birth date, time, and location to begin the ancient calculation.',
-  },
-  {
-    icon: Sparkles,
-    title: 'AI Analyzes Your Blueprint',
-    description: 'Our system maps your elemental archetype using time-honored Eastern wisdom.',
-  },
-  {
-    icon: BookOpen,
-    title: 'Unlock Personalized Insights',
-    description: 'Receive your unique Energy Blueprint covering career, love, health, and forecast.',
-  },
-];
 
 const testimonials = [
   {
@@ -62,22 +45,34 @@ const testimonials = [
 ];
 
 export default function LandingPage() {
-  const [isApiModalOpen, setIsApiModalOpen] = useState(false);
+  const { locale } = useLanguage();
+
+  const steps = [
+    {
+      icon: Compass,
+      title: t('landing.steps.0.title', locale),
+      description: t('landing.steps.0.desc', locale),
+    },
+    {
+      icon: Sparkles,
+      title: t('landing.steps.1.title', locale),
+      description: t('landing.steps.1.desc', locale),
+    },
+    {
+      icon: BookOpen,
+      title: t('landing.steps.2.title', locale),
+      description: t('landing.steps.2.desc', locale),
+    },
+  ];
 
   return (
     <main className="relative min-h-screen">
       <ParticleBackground />
 
-      {/* API Config Button */}
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
-        onClick={() => setIsApiModalOpen(true)}
-        className="fixed top-4 right-4 z-50 p-2.5 rounded-full bg-slate-800/80 border border-slate-700 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all"
-      >
-        <Settings className="w-5 h-5" />
-      </motion.button>
+      {/* Top-right controls */}
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <LanguageSwitcher />
+      </div>
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
@@ -95,7 +90,7 @@ export default function LandingPage() {
           <motion.div variants={fadeInUp} className="mb-8">
             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-500/30 bg-cyan-500/5 text-cyan-400 text-sm">
               <Sparkles className="w-4 h-4" />
-              5,000 Years of Eastern Wisdom, Powered by AI
+              {t('landing.badge', locale)}
             </span>
           </motion.div>
 
@@ -104,9 +99,19 @@ export default function LandingPage() {
             variants={fadeInUp}
             className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-serif mb-6 tracking-tight leading-tight"
           >
-            Unlock Your{' '}
-            <span className="text-cyan-400">Ancient</span>{' '}
-            Blueprint
+            {locale === 'zh' ? (
+              <>
+                解锁你的
+                <span className="text-cyan-400">命盘</span>
+                蓝图
+              </>
+            ) : (
+              <>
+                Unlock Your{' '}
+                <span className="text-cyan-400">Ancient</span>{' '}
+                Blueprint
+              </>
+            )}
           </motion.h1>
 
           {/* Subtitle */}
@@ -114,17 +119,16 @@ export default function LandingPage() {
             variants={fadeInUp}
             className="text-lg md:text-xl text-slate-400 mb-10 font-light leading-relaxed max-w-2xl mx-auto"
           >
-            Moving beyond generic horoscopes. Discover your true elemental nature
-            through the time-honored wisdom of Bazi.
+            {t('landing.subtitle', locale)}
           </motion.p>
 
           {/* CTA */}
           <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <MysticButton href="/quiz" size="lg">
-              Discover Your Element — Free
+              {t('landing.cta.discover', locale)}
             </MysticButton>
             <MysticButton href="/divination" size="lg" className="border-amber-500/30 hover:border-amber-400">
-              Ask the Oracle
+              {t('landing.cta.oracle', locale)}
             </MysticButton>
           </motion.div>
 
@@ -161,10 +165,10 @@ export default function LandingPage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-serif text-white mb-4">
-              How It Works
+              {t('landing.howItWorks.title', locale)}
             </h2>
             <p className="text-slate-400 max-w-xl mx-auto">
-              Three simple steps to reveal your elemental blueprint
+              {t('landing.howItWorks.subtitle', locale)}
             </p>
           </motion.div>
 
@@ -183,7 +187,7 @@ export default function LandingPage() {
                     <step.icon className="w-6 h-6 text-cyan-400" />
                   </div>
                   <div className="text-cyan-400 text-sm font-medium mb-3">
-                    Step {index + 1}
+                    {t('landing.step', locale)} {index + 1}
                   </div>
                   <h3 className="text-xl font-serif text-white mb-3">
                     {step.title}
@@ -209,7 +213,7 @@ export default function LandingPage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-serif text-white mb-4">
-              What Seekers Say
+              {t('landing.testimonials.title', locale)}
             </h2>
           </motion.div>
 
@@ -251,13 +255,13 @@ export default function LandingPage() {
             transition={{ duration: 0.6 }}
           >
             <h2 className="text-3xl md:text-4xl font-serif text-white mb-6">
-              Ready to Discover Your Element?
+              {t('landing.ctaSection.title', locale)}
             </h2>
             <p className="text-slate-400 mb-8 max-w-xl mx-auto">
-              Your personalized Energy Blueprint awaits. It takes less than a minute to begin your journey of self-discovery.
+              {t('landing.ctaSection.subtitle', locale)}
             </p>
             <MysticButton href="/quiz" size="lg">
-              Start Your Free Reading
+              {t('landing.ctaSection.button', locale)}
             </MysticButton>
           </motion.div>
         </div>
@@ -268,14 +272,14 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-slate-500 text-sm">
-              © 2026 MysticEast AI. All rights reserved.
+              {t('landing.footer.copyright', locale)}
             </div>
             <div className="flex gap-6 text-sm">
               <a href="/privacy" className="text-slate-500 hover:text-cyan-400 transition-colors">
-                Privacy Policy
+                {t('landing.footer.privacy', locale)}
               </a>
               <a href="/terms" className="text-slate-500 hover:text-cyan-400 transition-colors">
-                Terms of Service
+                {t('landing.footer.terms', locale)}
               </a>
             </div>
           </div>
@@ -283,8 +287,6 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {/* API Key Modal */}
-      <ApiKeyModal isOpen={isApiModalOpen} onClose={() => setIsApiModalOpen(false)} />
     </main>
   );
 }

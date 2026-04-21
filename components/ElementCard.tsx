@@ -3,6 +3,8 @@
 import { motion } from 'framer-motion';
 import { ElementResult } from '@/types';
 import { elementData } from '@/lib/elements';
+import { useLanguage } from './LanguageProvider';
+import { t, TranslationKey } from '@/lib/i18n';
 
 interface ElementCardProps {
   result: ElementResult;
@@ -10,7 +12,14 @@ interface ElementCardProps {
 }
 
 export default function ElementCard({ result, showFullDescription = true }: ElementCardProps) {
+  const { locale } = useLanguage();
   const data = elementData[result.element];
+
+  // 根据当前语言获取翻译内容
+  const archetype = t(`archetype.${result.element}` as TranslationKey, locale);
+  const keywords = t(`keywords.${result.element}` as TranslationKey, locale);
+  const polarityLabel = t(`polarity.${result.polarity}` as TranslationKey, locale);
+  const elementName = t(`element.${result.element}` as TranslationKey, locale);
 
   return (
     <motion.div
@@ -54,10 +63,10 @@ export default function ElementCard({ result, showFullDescription = true }: Elem
           className="text-center mb-4"
         >
           <h2 className="text-3xl md:text-4xl font-serif text-white mb-2">
-            {result.archetype}
+            {archetype}
           </h2>
           <p className="text-lg" style={{ color: data.color }}>
-            ({result.polarity === 'yin' ? 'Yin' : 'Yang'} {data.name})
+            ({polarityLabel} {elementName})
           </p>
         </motion.div>
 
@@ -68,7 +77,7 @@ export default function ElementCard({ result, showFullDescription = true }: Elem
           transition={{ delay: 0.5 }}
           className="flex justify-center gap-3 mb-6 flex-wrap"
         >
-          {result.keywords.map((keyword, index) => (
+          {(keywords as unknown as string[]).map((keyword, index) => (
             <span
               key={index}
               className="px-4 py-1.5 rounded-full text-sm border"

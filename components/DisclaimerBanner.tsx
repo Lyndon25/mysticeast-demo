@@ -1,13 +1,16 @@
 'use client';
 
 import { AlertTriangle } from 'lucide-react';
+import { useLanguage } from './LanguageProvider';
+import { t } from '@/lib/i18n';
 
 interface DisclaimerBannerProps {
   variant?: 'inline' | 'banner' | 'footer';
 }
 
 export default function DisclaimerBanner({ variant = 'inline' }: DisclaimerBannerProps) {
-  const text = "For Entertainment Purposes Only. This is not professional medical, psychological, or financial advice.";
+  const { locale } = useLanguage();
+  const text = t('disclaimer.text', locale);
 
   if (variant === 'banner') {
     return (
