@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     };
 
     const apiKey = process.env.OPENAI_API_KEY;
-    const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
+    const rawBaseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
     const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
     if (!apiKey) {
@@ -21,6 +21,12 @@ export async function POST(req: NextRequest) {
         { error: 'API key not configured on server' },
         { status: 500 }
       );
+    }
+
+    // Normalize base URL: ensure it ends with /v1 (some providers omit it)
+    let baseUrl = rawBaseUrl.replace(/\/$/, '');
+    if (!baseUrl.endsWith('/v1')) {
+      baseUrl = `${baseUrl}/v1`;
     }
 
     const prompt = generateFullReportPrompt({
@@ -55,8 +61,15 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const text = await response.text();
+      console.error('[LLM Error]', {
+        baseUrl,
+        model,
+        status: response.status,
+        responseBody: text.slice(0, 500),
+        requestBodyPreview: prompt.slice(0, 200),
+      });
       return NextResponse.json(
-        { error: `LLM API error: ${response.status} ${text}` },
+        { error: `LLM API error: ${response.status} ${text.slice(0, 200)}` },
         { status: 502 }
       );
     }
