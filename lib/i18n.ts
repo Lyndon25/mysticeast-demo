@@ -263,8 +263,8 @@ const translations = {
     zh: '解锁完整报告',
   },
   'report.locked.subtitle': {
-    en: 'Generate a personalized 7-section AI report based on your complete Four Pillars birth chart.',
-    zh: '基于你完整的四柱八字，生成个性化的 7 段 AI 分析报告。',
+    en: 'Generate a personalized 8-chapter deep AI report based on your complete Four Pillars birth chart — approximately 3,000 words.',
+    zh: '基于你完整的四柱八字，生成个性化的八章深度 AI 分析报告——约三千汉字。',
   },
   'report.locked.preview': {
     en: 'Free Preview',
@@ -329,6 +329,39 @@ const translations = {
   'report.tabs.advice': {
     en: 'Daily Practice',
     zh: '日常修炼',
+  },
+  // V2 八章深度报告标题
+  'report.chapter1.title': {
+    en: 'Chart Context & Energy Field',
+    zh: '排盘背景与能量场速写',
+  },
+  'report.chapter2.title': {
+    en: 'Chart Semiotic Deconstruction',
+    zh: '命盘符号学解构',
+  },
+  'report.chapter3.title': {
+    en: 'Five-Element Dynamics',
+    zh: '五行生克与能量流变',
+  },
+  'report.chapter4.title': {
+    en: 'Major Cycle Projection',
+    zh: '大运推演与关键节点',
+  },
+  'report.chapter5.title': {
+    en: 'Core Dilemma Diagnosis',
+    zh: '核心困境诊断',
+  },
+  'report.chapter6.title': {
+    en: 'Meditation & Practice Guidance',
+    zh: '禅修实修指引',
+  },
+  'report.chapter7.title': {
+    en: 'Action Strategy',
+    zh: '行动方略',
+  },
+  'report.chapter8.title': {
+    en: 'Closing & Daily Heart Method',
+    zh: '结语与每日心法',
   },
 
   // --- Divination 页面 ---

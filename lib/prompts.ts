@@ -15,7 +15,7 @@ export interface ReportPromptParams {
  */
 function generateBaziContext(bazi: BaziResult, birthDate: string, birthTime: string): string {
   const { fourPillars, dayMaster, tenGods, elementBalance, strength, favorableElements, unfavorableElements, favorableGods, personalityArchetype } = bazi;
-  
+
   return JSON.stringify({
     userProfile: {
       birthDate,
@@ -24,21 +24,21 @@ function generateBaziContext(bazi: BaziResult, birthDate: string, birthTime: str
     fourPillars: {
       year: {
         gan: `${fourPillars.year.gan.gan} (${fourPillars.year.gan.element}, ${fourPillars.year.gan.polarity})`,
-        zhi: `${fourPillars.year.zhi.zhi} (${fourPillars.year.zhi.element})`,
+        zhi: `${fourPillars.year.zhi.zhi} (${fourPillars.year.zhi.element}, 藏干: ${fourPillars.year.zhi.hiddenGan.join('、')})`,
         tenGod: tenGods.yearGan,
       },
       month: {
         gan: `${fourPillars.month.gan.gan} (${fourPillars.month.gan.element}, ${fourPillars.month.gan.polarity})`,
-        zhi: `${fourPillars.month.zhi.zhi} (${fourPillars.month.zhi.element})`,
+        zhi: `${fourPillars.month.zhi.zhi} (${fourPillars.month.zhi.element}, 藏干: ${fourPillars.month.zhi.hiddenGan.join('、')})`,
         tenGod: tenGods.monthGan,
       },
       day: {
-        gan: `${fourPillars.day.gan.gan} — DAY MASTER (${fourPillars.day.gan.element}, ${fourPillars.day.gan.polarity})`,
-        zhi: `${fourPillars.day.zhi.zhi} (${fourPillars.day.zhi.element})`,
+        gan: `${fourPillars.day.gan.gan} — 日主/日元 (${fourPillars.day.gan.element}, ${fourPillars.day.gan.polarity})`,
+        zhi: `${fourPillars.day.zhi.zhi} (${fourPillars.day.zhi.element}, 藏干: ${fourPillars.day.zhi.hiddenGan.join('、')})`,
       },
       hour: {
         gan: `${fourPillars.hour.gan.gan} (${fourPillars.hour.gan.element}, ${fourPillars.hour.gan.polarity})`,
-        zhi: `${fourPillars.hour.zhi.zhi} (${fourPillars.hour.zhi.element})`,
+        zhi: `${fourPillars.hour.zhi.zhi} (${fourPillars.hour.zhi.element}, 藏干: ${fourPillars.hour.zhi.hiddenGan.join('、')})`,
         tenGod: tenGods.hourGan,
       },
     },
@@ -46,6 +46,14 @@ function generateBaziContext(bazi: BaziResult, birthDate: string, birthTime: str
       element: dayMaster.element,
       polarity: dayMaster.polarity,
       archetype: personalityArchetype,
+    },
+    tenGods: {
+      yearGan: tenGods.yearGan,
+      yearZhi: tenGods.yearZhi,
+      monthGan: tenGods.monthGan,
+      monthZhi: tenGods.monthZhi,
+      hourGan: tenGods.hourGan,
+      hourZhi: tenGods.hourZhi,
     },
     elementBalance: {
       wood: Math.round(elementBalance.wood * 10) / 10,
@@ -62,7 +70,7 @@ function generateBaziContext(bazi: BaziResult, birthDate: string, birthTime: str
 }
 
 /**
- * 生成完整报告的主Prompt
+ * 生成完整报告的主Prompt — V2 八章深度报告版
  */
 export function generateFullReportPrompt(params: ReportPromptParams): string {
   const { baziResult, locale } = params;
@@ -71,53 +79,88 @@ export function generateFullReportPrompt(params: ReportPromptParams): string {
   const polarity = baziResult.polarity;
   const data = elementData[element];
   const polarityLabel = polarity === 'yin' ? 'Yin' : 'Yang';
-  const { tenGods } = baziResult;
+  const { tenGods, elementBalance, strength, favorableElements } = baziResult;
+
+  const elMap: Record<string, string> = { wood: '木', fire: '火', earth: '土', metal: '金', water: '水' };
+  const elName = elMap[element] || element;
+  const polName = polarityLabel === 'Yin' ? '阴' : '阳';
+  const strengthName = strength === 'strong' ? '身强' : strength === 'weak' ? '身弱' : '中和';
+  const favElNames = favorableElements.map(e => elMap[e] || e).join('、');
 
   if (locale === 'zh') {
-    return `你是一位精通八字命理的专家，将古老的中国玄学智慧翻译为现代心理学、自我提升和健康生活方式的语言。
+    return `你以东方灵性研究者、数字策展人与古典文献学家的三重身份运行。对于每一次八字命理咨询请求，你必须生成一份总计约三千汉字的结构化深度报告，严禁输出简陋的短答复或列表式速览。报告固定分为八个递进章节，每章须内部层级分明、论述绵密，禁止空泛修辞与通用鸡汤，必须援引经典文本、十神配置、五行旺衰数值或节气参数作为推演锚点。
 
-## 用户完整命盘
+---
+
+## 用户完整命盘数据
 
 ${context}
 
 ## 用户的五行身份
-用户是一位${polarityLabel === 'Yin' ? '阴' : '阳'}${element === 'wood' ? '木' : element === 'fire' ? '火' : element === 'earth' ? '土' : element === 'metal' ? '金' : '水'}命人 — ${params.baziResult.personalityArchetype}。
+用户是一位${polName}${elName}命人 — ${baziResult.personalityArchetype}。
 核心特质：${data.keywords.join('、')}。
+身强身弱判定：${strengthName}。
+喜用神：${favElNames}。
 
 ---
 
-## 任务要求
+## 八章深度报告写作要求
 
-生成一份深度个性化的"能量蓝图报告"，包含恰好 7 个部分。每部分 180-250 字。用温暖、神秘但接地气的语气写作。使用现代心理学和自我帮助术语。**不要用英文术语如 "Bazi" 或 "Qi" —— 将概念翻译成中文友好的语言**。
+### 语气与风格指南
+- 以温暖、深邃而学术化的东方灵性语境写作，严禁使用"加油""相信自己"等通用鸡汤
+- 必须基于用户命盘中的具体数值（五行旺衰、十神配置、藏干组合）进行推演，每章至少引用2-3处具体数据
+- 使用建议性语言（"你的能量场倾向于""命盘显示""从五行流变观之"）
+- 绝不提供医疗、财务或法律建议；绝不做出绝对预测（"你一定会""你必须"）
+- 在JSON字符串值内部可使用Markdown格式（**加粗**、分段、引文等）提升可读性
 
-### 语气指南：
-- 神秘但务实、激励人心、赋予力量
-- 使用建议性语言（"你可能会发现"、"考虑探索"、"你的能量倾向于"）
-- 绝不提供医疗、财务或法律建议
-- 绝不做出绝对预测（"你将会"、"你必须"）
-- 基于用户实际的命盘数据提供具体可操作的洞察
-- 引用他们的具体日主、十神、五行平衡和喜用神
+### 第一章：排盘背景与能量场速写（约400字）
+- 精确描述用户的时空坐标（四柱干支、节气方位），说明这一时刻在六十甲子循环中的独特位置
+- 描绘用户当下整体气机格局：日主${elName}坐于何支、月令当令与否、天地人三才如何交感
+- 给出日主${polName}${elName}的核心气场画像：如"甲木参天"或"癸水涓流"般的意象描摹
+- 以《穷通宝鉴》或《滴天髓》中的相关论法为引，锚定整体基调
 
-### 1. 总览 — 你的能量印记
-基于四柱描述用户的整体能量模式。引用他们的日主五行和阴阳属性。解释主导和缺失的元素对他们人生道路意味着什么。提及他们的身强身弱（${params.baziResult.strength === 'strong' ? '身强' : params.baziResult.strength === 'weak' ? '身弱' : '中和'}）如何塑造他们面对挑战的方式。
+### 第二章：命盘符号学解构（约500字）
+- 逐柱精解：年柱${tenGods.yearGan}、月柱${tenGods.monthGan}、日柱（日主）、时柱${tenGods.hourGan}
+- 深入分析每一柱的天干地支组合所构成的"象"：如年柱揭示祖上荫庇与先天禀赋，月柱揭示父母宫与青年运势
+- 解析藏干暗局：各支中藏干的十神关系如何形成潜藏的性格维度与命运伏笔
+- 引用《子平真诠》或《三命通会》中关于相关十神的经典论述
+- 揭示命盘中的"用神格局"：正官格？伤官格？还是从格？说明格局成败
 
-### 2. 人格解码
-基于日主 + 十神配置深入剖析他们的性格。他们的${tenGods.monthGan}（月令影响）如何塑造内心驱动力？他们的${tenGods.yearGan}（年柱影响）透露出怎样的成长背景和先天特质？他们的喜用神（${params.baziResult.favorableElements.map(e => e === 'wood' ? '木' : e === 'fire' ? '火' : e === 'earth' ? '土' : e === 'metal' ? '金' : '水').join('、')}）如何在性格中体现？
+### 第三章：五行生克与能量流变（约400字）
+- 给出五行旺衰的具体数值分析：木${elementBalance.wood.toFixed(1)}、火${elementBalance.fire.toFixed(1)}、土${elementBalance.earth.toFixed(1)}、金${elementBalance.metal.toFixed(1)}、水${elementBalance.water.toFixed(1)}
+- 描述五行能量在命盘中的流转路径：谁生谁、谁克谁、何处过旺何处过衰
+- 结合脏腑对应关系（木肝、火心、土脾、金肺、水肾），推演身心能量的潜在倾向
+- 分析${strengthName}格局下的能量特征：如身强则需食伤泄秀或官杀制衡，身弱则需印比生扶
 
-### 3. 事业与使命
-基于十神分析事业潜力。${params.baziResult.favorableGods.includes('正官') || params.baziResult.favorableGods.includes('七杀') ? '他们的官杀暗示着领导力潜质。' : ''}${params.baziResult.favorableGods.includes('偏财') || params.baziResult.favorableGods.includes('正财') ? '他们的财星暗示着商业头脑。' : ''}建议 2-3 个与其五行本性契合的职业方向。解释他们的${params.baziResult.strength === 'strong' ? '身强自信' : params.baziResult.strength === 'weak' ? '身弱协作' : '中和适应性'}如何影响他们的职业态度。
+### 第四章：大运推演与关键节点（约400字）
+- 基于当前年月，推演用户所处大运周期的大致能量主题（以日主${elName}为核心，分析近期大运天干地支与命盘的刑冲合害关系）
+- 锁定未来90天内的关键能量窗口：哪些月份五行能量与用户喜用神${favElNames}共振
+- 指出需要留意的转折期：如地支相冲、天干相克的时段
+- 结合2026年丙午年的流年能量，分析火元素对用户${elName}日主的生克作用
 
-### 4. 感情与爱情
-基于日主和五行平衡描述他们的感情风格。哪些五行（${params.baziResult.favorableElements.map(e => e === 'wood' ? '木' : e === 'fire' ? '火' : e === 'earth' ? '土' : e === 'metal' ? '金' : '水').join('、')}）自然与他们和谐共振？他们的${polarityLabel === 'Yin' ? '阴' : '阳'}属性在爱情中如何体现？根据主导十神提及他们的"爱的语言"。如果食伤旺，他们需要智性连接；如果财星旺，他们通过实际行动表达爱。
+### 第五章：核心困境诊断（约400字）
+- 从业力模式维度：命盘中哪些十神过旺或过弱暗示了 recurring 的人生课题？如官杀混杂暗示权威议题，财星破印暗示取舍困境
+- 从心性盲区维度：${polName}日主在${strengthName}状态下容易形成哪些认知偏差？如身强者易刚愎自用，身弱者易过度依附
+- 从现世境遇维度：结合十神配置，分析事业、关系、健康领域最可能面临的结构性张力
+- 引用一句古典箴言作为本章收束
 
-### 5. 健康与养生
-聚焦与五行平衡对齐的整体养生（非医疗建议）。他们的${params.baziResult.elementBalance.wood < 1 ? '木弱' : ''}${params.baziResult.elementBalance.fire < 1 ? '火弱' : ''}${params.baziResult.elementBalance.earth < 1 ? '土弱' : ''}${params.baziResult.elementBalance.metal < 1 ? '金弱' : ''}${params.baziResult.elementBalance.water < 1 ? '水弱' : ''}暗示特定的养生需求。建议环境、食物（大类）、运动方式和正念练习来恢复能量。推荐如何日常激活喜用神。
+### 第六章：禅修实修指引（约400字）
+- 提供可每日执行的具体功法：根据喜用神${favElNames}和日主${elName}属性，推荐特定的呼吸法、冥想方案或身体练习
+- 明确时长：晨间、午间、晚间各分配多少时间
+- 给出意念锚点：冥想时的观想对象（如${elName === '水' ? '流水' : elName === '木' ? '参天古木' : elName === '火' ? '烛火' : elName === '土' ? '大地' : '金石'}意象）
+- 结合${strengthName}特质调整修行侧重：身强者重"放下"与"柔化"，身弱者重"积聚"与"稳固"
+- 可引用禅宗公案或道家导引术作为理论支撑
 
-### 6. 2026 年运势展望
-基于用户五行和喜用神给出 2026 年的个性化能量展望。2026 是丙午年 —— 强火之年。解释这一年的火能量如何与他们${element === 'wood' ? '木' : element === 'fire' ? '火' : element === 'earth' ? '土' : element === 'metal' ? '金' : '水'}日主互动。突出成长机会和需要注意的领域。以赋予力量的前瞻性声明结尾。
+### 第七章：行动方略（约300字）
+- 按优先级列出三条可验证、可量化的近期行动
+- 每条行动须包含：具体做什么、预期时间框架、可衡量的验证标准
+- 行动必须与命盘数据直接关联：如"在喜用神为${favElNames}的流月，于东方（木位）启动新项目"
+- 避免空泛建议，每条都应有命理推演依据
 
-### 7. 激活指南 — 你的日常修行
-给出 3-5 个具体可执行的日常建议来激活喜用神（${params.baziResult.favorableElements.map(e => e === 'wood' ? '木' : e === 'fire' ? '火' : e === 'earth' ? '土' : e === 'metal' ? '金' : '水').join('、')}）。这些应该是可以轻松融入日常的小习惯。包括：晨间仪式、颜色/穿搭建议、空间/环境贴士、以及关系实践。
+### 第八章：结语与每日心法（约200字）
+- 以一则凝练的偈颂或箴言收束全文（可仿禅宗偈语或《易经》系辞风格）
+- 提供一句可在每日晨间默诵的观想口诀
+- 以温暖而深邃的语气收束，给用户留下向内探索的 Invitation
 
 ---
 
@@ -125,55 +168,89 @@ ${context}
 
 只返回一个 JSON 对象，使用以下精确键名，不要 markdown 代码块：
 
-{"overview":"...","personality":"...","career":"...","love":"...","health":"...","forecast":"...","advice":"..."}
+{"chapter1":"...","chapter2":"...","chapter3":"...","chapter4":"...","chapter5":"...","chapter6":"...","chapter7":"...","chapter8":"..."}
 
 每个值必须以以下内容结尾："此洞察仅供娱乐和自我反思之用。"`;
   }
 
-  return `You are an expert in Bazi (Four Pillars of Destiny) who translates ancient Chinese metaphysics into modern Western self-help, psychology, and wellness language.
+  // English version
+  const elEnMap: Record<string, string> = { wood: 'Wood', fire: 'Fire', earth: 'Earth', metal: 'Metal', water: 'Water' };
+  const elEn = elEnMap[element] || element;
+  const strengthEn = strength === 'strong' ? 'Strong' : strength === 'weak' ? 'Weak' : 'Balanced';
+
+  return `You operate as a triune being: an Eastern spirituality researcher, a digital curator, and a classical philologist. For each Bazi (Four Pillars) destiny consultation, you must generate a structured deep report of approximately 3,000 words, divided into eight progressive chapters. Each chapter must be internally layered, densely argued, and anchored in classical texts, Ten God configurations, elemental balance metrics, or seasonal parameters. Vague rhetoric and generic self-help platitudes are strictly forbidden.
+
+---
 
 ## User's Complete Birth Chart
 
 ${context}
 
 ## User's Elemental Identity
-The user is a ${polarityLabel} ${element.toUpperCase()} person — ${params.baziResult.personalityArchetype}.
+The user is a ${polarityLabel} ${elEn} Day Master — ${baziResult.personalityArchetype}.
 Core traits: ${data.keywords.join(', ')}.
+Strength classification: ${strengthEn}.
+Favorable elements: ${favorableElements.join(', ')}.
 
 ---
 
-## YOUR TASK
+## Eight-Chapter Deep Report Requirements
 
-Generate a deeply personalized "Energy Blueprint Report" with EXACTLY 7 sections. Each section should be 180-250 words (not sentences — words). Write in a warm, mystical yet grounded tone. Use modern psychology and self-help terminology. NEVER use Chinese terms like "Bazi" or "Qi" — translate concepts into Western-friendly language.
+### Tone & Style Guidelines
+- Write in a warm, profound, and scholarly Eastern spiritual register. Never use generic phrases like "believe in yourself" or "stay positive."
+- Every chapter must reference at least 2–3 specific data points from the birth chart (elemental scores, Ten Gods, hidden stems).
+- Use suggestive language ("your energy field tends toward," "the chart indicates," "from the perspective of elemental flow").
+- NEVER give medical, financial, or legal advice. NEVER make absolute predictions ("you will," "you must").
+- You may use Markdown formatting (**bold**, paragraph breaks, block quotes) inside JSON string values for readability.
 
-### Tone Guidelines:
-- Mystical but grounded, inspiring, and empowering
-- Use suggestive language ("you may find", "consider exploring", "your energy tends toward")
-- NEVER give medical, financial, or legal advice
-- NEVER make absolute predictions ("you will", "you must")
-- Include specific, actionable insights based on the user's actual birth chart data above
-- Reference their specific Day Master, Ten Gods, element balance, and favorable elements
+### Chapter 1: Chart Context & Energy Field Sketch (~400 words)
+- Precisely describe the user's spatiotemporal coordinates (Four Pillars stems and branches, seasonal position), explaining this moment's unique place in the 60-Jiazi cycle.
+- Paint the overall qi pattern: the Day Master ${elEn} seated on which branch, whether the month command is in season, how heaven-earth-human interact.
+- Offer a core energetic portrait of the ${polarityLabel} ${elEn} Day Master, using imagistic language (e.g., "tall Jia-Wood reaching for sky" or "gentle Gui-Water threading through stone").
+- Anchor the tone with a reference to classical texts like *Qiong Tong Bao Jian* or *Di Tian Sui*.
 
-### 1. Overview — Your Energy Signature
-Describe the user's overall energy pattern based on their Four Pillars. Reference their Day Master element and polarity. Explain what their dominant and missing elements mean for their life path. Mention how their strength level (${params.baziResult.strength}) shapes their approach to challenges.
+### Chapter 2: Chart Semiotic Deconstruction (~500 words)
+- Decode each pillar in depth: Year (${tenGods.yearGan}), Month (${tenGods.monthGan}), Day (Day Master), Hour (${tenGods.hourGan}).
+- Analyze the "image" formed by each stem-branch pair: the Year Pillar reveals ancestral legacy; the Month Pillar reveals parental influence and youth fortune.
+- Unpack hidden stem configurations: how the concealed Ten Gods within each branch create latent personality dimensions and karmic伏笔.
+- Cite classical works such as *Zi Ping Zhen Quan* or *San Ming Tong Hui* on the relevant Ten Gods.
+- Reveal the "Useful God framework": is this a Direct Officer pattern? Hurting Officer pattern? Or a Follower pattern? Explain its success or failure.
 
-### 2. Personality Decoding
-Deep dive into their character based on Day Master + Ten Gods configuration. How does their ${tenGods.monthGan} (monthly influence) shape their inner drives? What does their ${tenGods.yearGan} (background influence) say about their upbringing and inherited traits? How do their favorable elements (${params.baziResult.favorableElements.join(', ')}) manifest in their personality?
+### Chapter 3: Five-Element Dynamics & Energy Flow (~400 words)
+- Present specific quantitative analysis: Wood ${elementBalance.wood.toFixed(1)}, Fire ${elementBalance.fire.toFixed(1)}, Earth ${elementBalance.earth.toFixed(1)}, Metal ${elementBalance.metal.toFixed(1)}, Water ${elementBalance.water.toFixed(1)}.
+- Describe the flow path of elemental energy: who generates whom, who restrains whom, where excess and deficiency lie.
+- Connect to organ correspondences (Wood–Liver, Fire–Heart, Earth–Spleen, Metal–Lungs, Water–Kidneys) to infer psycho-somatic tendencies.
+- Analyze the energetic signature of a ${strengthEn} chart: e.g., strong Day Master needs Output or Officer to channel; weak Day Master needs Resource or Companion to support.
 
-### 3. Career & Purpose
-Analyze career potential based on their Ten Gods. ${params.baziResult.favorableGods.includes('正官') || params.baziResult.favorableGods.includes('七杀') ? 'Their Authority/Challenge gods suggest leadership potential.' : ''} ${params.baziResult.favorableGods.includes('偏财') || params.baziResult.favorableGods.includes('正财') ? 'Their Wealth gods indicate business acumen.' : ''} Suggest 2-3 specific career directions that align with their elemental nature. Explain how their ${params.baziResult.strength === 'strong' ? 'strong self-assurance' : params.baziResult.strength === 'weak' ? 'collaborative nature' : 'adaptable energy'} influences their professional approach.
+### Chapter 4: Major Cycle Projection & Key Nodes (~400 words)
+- Based on current date, infer the thematic energy of the user's current Major Luck cycle, analyzing stem-branch interactions (clash, harmony, punishment, destruction) with the natal chart.
+- Lock in key energy windows within the next 90 days: which months resonate with the user's favorable elements (${favorableElements.join(', ')}).
+- Flag转折 periods: times when branch clashes or stem conflicts arise.
+- Analyze the 2026 Bing-Wu (strong Fire) year's interaction with the user's ${elEn} Day Master.
 
-### 4. Relationships & Love
-Describe their relationship style based on their Day Master and element balance. Which elements (${params.baziResult.favorableElements.join(', ')}) naturally harmonize with them? How does their ${polarityLabel} nature show up in love? Mention their "love language" based on their dominant Ten Gods. If they have strong Output gods (食神/伤官), they need intellectual connection. If strong Wealth gods, they express love through acts of service.
+### Chapter 5: Core Dilemma Diagnosis (~400 words)
+- Karmic pattern dimension: which overabundant or deficient Ten Gods suggest recurring life themes? (e.g., mixed Officer and Challenge gods indicating authority issues; Wealth breaking Resource indicating value conflicts.)
+- Cognitive blind spot dimension: what biases does a ${polarityLabel} ${elEn} Day Master with ${strengthEn} energy tend toward? (e.g., strong types may become stubborn; weak types may over-depend.)
+- Worldly circumstance dimension: based on Ten God configuration, identify the structural tensions most likely in career, relationship, and health domains.
+- Close the chapter with a classical aphorism.
 
-### 5. Health & Wellness
-Focus on holistic wellness aligned to their element balance (NOT medical advice). Their ${params.baziResult.elementBalance.wood < 1 ? 'low Wood energy' : ''}${params.baziResult.elementBalance.fire < 1 ? 'low Fire energy' : ''}${params.baziResult.elementBalance.earth < 1 ? 'low Earth energy' : ''}${params.baziResult.elementBalance.metal < 1 ? 'low Metal energy' : ''}${params.baziResult.elementBalance.water < 1 ? 'low Water energy' : ''} suggests specific lifestyle needs. Suggest environments, foods (general categories), movement practices, and mindfulness techniques that restore their energy. Recommend how to activate their favorable elements daily.
+### Chapter 6: Meditation & Practice Guidance (~400 words)
+- Provide specific daily practices based on favorable elements (${favorableElements.join(', ')}) and Day Master ${elEn}: recommend particular breathing techniques, meditation methods, or body practices.
+- Specify durations: how many minutes for morning, midday, and evening sessions.
+- Give a mental anchor: the visualization object (e.g., flowing water for Water, ancient tree for Wood, candle flame for Fire, mountain earth for Earth, refined metal for Metal).
+- Adjust emphasis based on ${strengthEn}: strong types focus on "letting go" and "softening"; weak types focus on "accumulating" and "stabilizing."
+- Ground in Zen koans or Daoist guiding practices where appropriate.
 
-### 6. 2026 Energy Forecast
-Give a personalized energy forecast for 2026 based on their element and favorable elements. 2026 is a 丙午 (Bing Wu) year — strong Fire energy. Explain how this Fire year specifically interacts with their ${element} Day Master. Highlight opportunities for growth and areas to be mindful of. End with an empowering, forward-looking statement.
+### Chapter 7: Action Strategy (~300 words)
+- List three verifiable, quantifiable near-term actions in order of priority.
+- Each action must include: what specifically to do, expected timeframe, and measurable validation criteria.
+- Every action must be directly tied to chart data: e.g., "During the ${favorableElements[0]}-element month, initiate a new project in the ${favorableElements[0]} direction."
+- Avoid vague advice; each must carry divination-based reasoning.
 
-### 7. Activation Guide — Your Daily Practice
-Give 3-5 concrete, daily actionable recommendations to activate their favorable elements (${params.baziResult.favorableElements.join(', ')}). These should be simple practices they can integrate into their routine. Include: a morning ritual, a color/wardrobe suggestion, a space/environment tip, and a relationship practice.
+### Chapter 8: Closing & Daily Heart Method (~200 words)
+- Conclude with a concise gatha-style verse or aphorism (in the style of Zen poetry or *I Ching* commentary).
+- Provide a single daily recitation mantra for morning practice.
+- End with a warm yet profound tone, leaving the user with an invitation for inward exploration.
 
 ---
 
@@ -181,7 +258,7 @@ Give 3-5 concrete, daily actionable recommendations to activate their favorable 
 
 Return ONLY a JSON object with these exact keys, no markdown code blocks:
 
-{"overview":"...","personality":"...","career":"...","love":"...","health":"...","forecast":"...","advice":"..."}
+{"chapter1":"...","chapter2":"...","chapter3":"...","chapter4":"...","chapter5":"...","chapter6":"...","chapter7":"...","chapter8":"..."}
 
-Every value MUST end with: \" This insight is for entertainment and self-reflection purposes only.\"`;
+Every value MUST end with: " This insight is for entertainment and self-reflection purposes only."`;
 }

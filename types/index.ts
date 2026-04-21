@@ -86,15 +86,31 @@ export interface BaziResult {
   description: string;
 }
 
+/** V2 深度报告八章节结构（三千汉字级） */
 export interface AIReport {
-  overview: string;
-  personality: string;
-  career: string;
-  love: string;
-  health: string;
-  forecast: string;
-  advice: string;
+  // ===== V2 八章深度结构（优先）=====
+  chapter1: string; // 排盘背景与能量场速写
+  chapter2: string; // 命盘符号学解构
+  chapter3: string; // 五行生克与能量流变
+  chapter4: string; // 大运推演与关键节点
+  chapter5: string; // 核心困境诊断
+  chapter6: string; // 禅修实修指引
+  chapter7: string; // 行动方略
+  chapter8: string; // 结语与每日心法
+
+  // ===== V1 兼容字段（旧报告可选保留）=====
+  overview?: string;
+  personality?: string;
+  career?: string;
+  love?: string;
+  health?: string;
+  forecast?: string;
+  advice?: string;
 }
+
+export type ReportChapterKey =
+  | 'chapter1' | 'chapter2' | 'chapter3' | 'chapter4'
+  | 'chapter5' | 'chapter6' | 'chapter7' | 'chapter8';
 
 export interface DivinationRecord {
   id: string;

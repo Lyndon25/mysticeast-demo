@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
           { role: 'user', content: prompt },
         ],
         temperature: 0.7,
-        max_tokens: 2500,
+        max_tokens: 6000,
       }),
     });
 
@@ -95,8 +95,8 @@ export async function POST(req: NextRequest) {
     const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
     const report: AIReport = JSON.parse(cleanContent);
 
-    // Validate structure
-    const required = ['overview', 'personality', 'career', 'love', 'health', 'forecast', 'advice'];
+    // Validate structure (V2: 8-chapter deep report)
+    const required = ['chapter1', 'chapter2', 'chapter3', 'chapter4', 'chapter5', 'chapter6', 'chapter7', 'chapter8'];
     const missing = required.filter((k) => !(k in report));
     if (missing.length > 0) {
       return NextResponse.json(
