@@ -70,6 +70,7 @@ export default function ReportPage() {
         baziResult,
         birthDate: birthInfo.date || '',
         birthTime: birthInfo.time || '',
+        locale,
       });
 
       setReport(generatedReport);

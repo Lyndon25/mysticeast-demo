@@ -5,10 +5,11 @@ import { generateFullReportPrompt } from '@/lib/prompts';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { baziResult, birthDate, birthTime } = body as {
+    const { baziResult, birthDate, birthTime, locale } = body as {
       baziResult: BaziResult;
       birthDate: string;
       birthTime: string;
+      locale?: 'en' | 'zh';
     };
 
     const apiKey = process.env.OPENAI_API_KEY;
@@ -26,6 +27,7 @@ export async function POST(req: NextRequest) {
       baziResult,
       birthDate,
       birthTime,
+      locale: locale || 'en',
     });
 
     const response = await fetch(`${baseUrl}/chat/completions`, {
@@ -40,7 +42,9 @@ export async function POST(req: NextRequest) {
           {
             role: 'system',
             content:
-              'You are a wise Eastern philosophy interpreter who translates ancient Bazi wisdom into modern Western self-help language. You respond with valid JSON only. Within each JSON string value, you may use Markdown formatting (bold, lists, etc.) for better readability.',
+              locale === 'zh'
+                ? '你是一位智慧的东西方哲学翻译者，将古老的八字智慧转化为现代心理学和自我帮助语言。你只返回合法的 JSON。在 JSON 字符串值中，你可以使用 Markdown 格式（加粗、列表等）来提升可读性。'
+                : 'You are a wise Eastern philosophy interpreter who translates ancient Bazi wisdom into modern Western self-help language. You respond with valid JSON only. Within each JSON string value, you may use Markdown formatting (bold, lists, etc.) for better readability.',
           },
           { role: 'user', content: prompt },
         ],
